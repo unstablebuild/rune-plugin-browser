@@ -12,7 +12,7 @@ case "$RUNE_DATADIR" in
 	*) echo 'terminal-browser: RUNE_DATADIR must be an absolute path' >&2; exit 1 ;;
 esac
 
-ROOT="$RUNE_DATADIR/lib/terminal-browser"
+ROOT="$RUNE_DATADIR/lib/browser"
 STATE="$RUNE_DATADIR/terminal-browser"
 umask 077
 mkdir -p "$STATE/data" "$STATE/state" "$STATE/cache" "$STATE/config" \
@@ -29,7 +29,7 @@ export TERMINAL_BROWSER_APPDATA="$STATE/appdata"
 export TERMINAL_BROWSER_CONFIG_DIR="$STATE/config/terminal-browser"
 
 if [ "$1" = upgrade ]; then
-	echo "terminal-browser is managed by Rune: run 'pkg install terminal-browser' in the Rune console to upgrade" >&2
+	echo "terminal-browser is managed by Rune: run 'pkg install browser' in the Rune console to upgrade" >&2
 	exit 1
 fi
 

@@ -5,3 +5,9 @@ extensions:
       # package manager expands these variables to the selected install's
       # stable lib path; no skill files are copied outside the data directory.
       skills-dir: '$RUNE_DATADIR/lib/$RUNE_PKG_ID/skills/default'
+
+command:
+  aliases:
+    # Unused alias arguments pass through, so both `browser` and
+    # `browser <url>` work without a required positional reference.
+    browser: terminalnewtab terminal-browser open

@@ -11,7 +11,7 @@
 #   5. On darwin hosts, the macOS app's signature still verifies.
 set -euo pipefail
 
-TAR="${TAR:-terminal-browser.tar.gz}"
+TAR="${TAR:-browser.tar.gz}"
 TARGET_OS="${TARGET_OS:-$(uname | tr '[:upper:]' '[:lower:]')}"
 
 [ -f "$TAR" ] || { echo "error: $TAR not found; run 'make' first" >&2; exit 1; }
@@ -88,8 +88,12 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
     package_config = archive.extractfile("./config.yaml").read().decode()
     skill = archive.extractfile("./skills/default/terminal-browser/SKILL.md").read().decode()
     upstream_license = archive.extractfile("./licenses/terminal-browser/LICENSE").read().decode()
+    launcher_source = archive.extractfile("./bin/terminal-browser").read().decode()
 
 assert "skills-dir: '$RUNE_DATADIR/lib/$RUNE_PKG_ID/skills/default'" in package_config
+assert 'browser: terminalnewtab terminal-browser open' in package_config
+assert 'pkg install browser' in launcher_source
+assert 'ROOT="$RUNE_DATADIR/lib/browser"' in launcher_source
 assert 'name: terminal-browser' in skill
 assert 'Zenbu Labs, Inc.' in upstream_license
 assert 'ripgrep' not in upstream_license
@@ -114,8 +118,8 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 tar -xzf "$TAR" -C "$tmp" ./bin/terminal-browser
 launcher="$tmp/bin/terminal-browser"
-mkdir -p "$tmp/home" "$tmp/rune/lib/terminal-browser/electron"
-cat > "$tmp/rune/lib/terminal-browser/electron/pixel" <<'SH'
+mkdir -p "$tmp/home" "$tmp/rune/lib/browser/electron"
+cat > "$tmp/rune/lib/browser/electron/pixel" <<'SH'
 #!/bin/sh
 printf '%s\n' "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" \
     "$XDG_CONFIG_HOME" "$XDG_RUNTIME_DIR" "$TMPDIR" \
@@ -123,7 +127,7 @@ printf '%s\n' "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" \
     "$TERMINAL_BROWSER_CONFIG_DIR" "$TERMINAL_BROWSER_DIST_ROOT" \
     "$1" "$2"
 SH
-chmod +x "$tmp/rune/lib/terminal-browser/electron/pixel"
+chmod +x "$tmp/rune/lib/browser/electron/pixel"
 if (cd "$tmp/home" && env -u RUNE_DATADIR HOME="$tmp/home" "$launcher" --help) >"$tmp/unset.out" 2>&1; then
     echo 'error: launcher accepts unset RUNE_DATADIR' >&2; exit 1
 fi
@@ -137,7 +141,7 @@ printf '%s\n' \
     "$tmp/rune/terminal-browser/runtime" "$tmp/rune/terminal-browser/tmp" \
     "$tmp/rune/terminal-browser/interop" "$tmp/rune/terminal-browser/appdata" \
     "$tmp/rune/terminal-browser/config/terminal-browser" \
-    "$tmp/rune/lib/terminal-browser" "$tmp/rune/lib/terminal-browser/cli/dist/main.js" \
+    "$tmp/rune/lib/browser" "$tmp/rune/lib/browser/cli/dist/main.js" \
     '--help' >"$tmp/expected.out"
 diff -u "$tmp/expected.out" "$tmp/actual.out"
 if [ -n "$(ls -A "$tmp/home")" ] || [ -e "$tmp/home/relative" ]; then

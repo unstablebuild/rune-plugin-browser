@@ -12,8 +12,7 @@ https://github.com/user-attachments/assets/94b98df7-4452-411c-9f97-6d4c081ab1cd
 Installing this package:
 
 - Adds the `terminal-browser` command to your Rune data directory and puts it on your
-`PATH`, so you can open a browser in a Rune terminal (`terminalnewtab terminal-browser
-<url>`).
+  `PATH`. Open a browser in a new Rune tab from the command prompt with `browser [url]`.
 - Bundles `agent-browser` to power `terminal-browser action`, so an agent can drive a
 browser session.
 - Bundles upstream's `terminal-browser` skill and configures Rune Agent to discover it. If
@@ -28,7 +27,7 @@ rather than `terminal-browser upgrade`.
 Open the [Rune console](https://docs.rune.build/learn/console) and run:
 
 ```
-pkg install terminal-browser
+pkg install browser
 ```
 
 On Linux, Chromium needs a few system libraries (e.g. `libnss3`, `libgtk-3-0`,

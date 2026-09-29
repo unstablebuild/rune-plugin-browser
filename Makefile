@@ -1,4 +1,4 @@
-TAR=terminal-browser.tar.gz
+TAR=browser.tar.gz
 
 # Upstream release repackaged by this plugin. Bump TB_VERSION and the four
 # checksums together (shasum -a 256 on the release assets).
