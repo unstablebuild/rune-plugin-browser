@@ -1,0 +1,42 @@
+# A browser package for Rune
+
+A package that bundles [terminal-browser](https://github.com/zenbu-labs/terminal-browser),
+a real Chromium browser to run as native content within
+[Rune](https://github.com/unstablebuild/rune).
+
+## What it installs
+
+Installing this package:
+
+- Adds the `terminal-browser` command to your Rune data directory and puts it on your
+`PATH`, so you can open a browser in a Rune terminal (`terminalnewtab terminal-browser
+<url>`).
+- Bundles `agent-browser` to power `terminal-browser action`, so an agent can drive a
+browser session.
+- Bundles upstream's `terminal-browser` skill and configures Rune Agent to discover it. If
+Rune Agent is already running, restart Rune for it to read the new skills directory.
+
+This package does not run upstream's setup or alter agent directories, editor settings, or
+system AppArmor profiles. `terminal-browser setup` is disabled. Upgrades go through Rune
+rather than `terminal-browser upgrade`.
+
+## Install
+
+Open the [Rune console](https://docs.rune.build/learn/console) and run:
+
+```
+pkg install terminal-browser
+```
+
+On Linux, Chromium needs a few system libraries (e.g. `libnss3`, `libgtk-3-0`,
+`libasound2t64`, `libgbm1`). Some hosts also need a sandbox configuration; the package
+reports the sandbox error but does not change system configuration or disable Chromium's
+sandbox.
+
+## License
+
+This repository's packaging (the Makefile, scripts, and configuration) is licensed under
+the MIT License; see [LICENSE](./LICENSE).
+
+terminal-browser is distributed by Zenbu Labs under the MIT License. Its license text
+ships inside the release package under `licenses/terminal-browser/`.

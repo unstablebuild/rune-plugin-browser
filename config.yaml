@@ -1,0 +1,7 @@
+extensions:
+  rune-agent:
+    config:
+      # Rune Agent reads this alongside its existing skills list. Rune's
+      # package manager expands these variables to the selected install's
+      # stable lib path; no skill files are copied outside the data directory.
+      skills-dir: '$RUNE_DATADIR/lib/$RUNE_PKG_ID/skills/default'
