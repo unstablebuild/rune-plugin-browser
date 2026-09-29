@@ -4,6 +4,9 @@ A package that bundles [terminal-browser](https://github.com/zenbu-labs/terminal
 a real Chromium browser to run as native content within
 [Rune](https://github.com/unstablebuild/rune).
 
+https://github.com/user-attachments/assets/94b98df7-4452-411c-9f97-6d4c081ab1cd
+
+
 ## What it installs
 
 Installing this package:
