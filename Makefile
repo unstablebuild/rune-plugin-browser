@@ -33,8 +33,15 @@ DIST_TARGETS := \
 	dist-staging-darwin-arm64 dist-staging-darwin-amd64 \
 	dist-staging-linux-arm64  dist-staging-linux-amd64
 
-.PHONY: $(DIST_TARGETS) clean test stage
+.PHONY: $(DIST_TARGETS) dist-all-prod dist-all-staging clean test stage
 default: $(TAR)
+
+# Targets share browser.tar.gz and pkg/, so they must run one at a time.
+dist-all-prod dist-all-staging: dist-all-%:
+	$(MAKE) dist-$*-darwin-arm64
+	$(MAKE) dist-$*-darwin-amd64
+	$(MAKE) dist-$*-linux-arm64
+	$(MAKE) dist-$*-linux-amd64
 
 $(UPSTREAM_TAR):
 	@mkdir -p $(dir $@)
