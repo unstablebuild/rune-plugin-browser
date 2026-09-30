@@ -8,6 +8,4 @@ extensions:
 
 command:
   aliases:
-    # Unused alias arguments pass through, so both `browser` and
-    # `browser <url>` work without a required positional reference.
-    browser: terminalnewtab terminal-browser open
+    browser: terminalnewtab terminal-browser $1
