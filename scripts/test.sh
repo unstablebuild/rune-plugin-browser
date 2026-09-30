@@ -91,7 +91,7 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
     launcher_source = archive.extractfile("./bin/terminal-browser").read().decode()
 
 assert "skills-dir: '$RUNE_DATADIR/lib/$RUNE_PKG_ID/skills/default'" in package_config
-assert 'browser: terminalnewtab terminal-browser open' in package_config
+assert 'browser: terminalnewtab terminal-browser $1' in package_config
 assert 'pkg install browser' in launcher_source
 assert 'ROOT="$RUNE_DATADIR/lib/browser"' in launcher_source
 assert 'name: terminal-browser' in skill
