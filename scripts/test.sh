@@ -8,7 +8,8 @@
 #      copies every executable onto PATH), and the launcher is the last one,
 #      so it owns the terminal-browser name on PATH.
 #   3. Patched JS disables setup and keeps writable output under Rune data.
-#   4. The launcher uses only the supplied absolute Rune data directory.
+#   4. The launcher uses only the supplied absolute Rune data directory, except
+#      for sockets, whose paths must fit the platform's limit.
 #   5. On darwin hosts, the macOS app's signature still verifies.
 set -euo pipefail
 
@@ -136,10 +137,11 @@ if (cd "$tmp/home" && RUNE_DATADIR=relative HOME="$tmp/home" "$launcher" --help)
     echo 'error: launcher accepts relative RUNE_DATADIR' >&2; exit 1
 fi
 HOME="$tmp/home" RUNE_DATADIR="$tmp/rune" "$launcher" --help >"$tmp/actual.out"
+runtime="$(sed -n 5p "$tmp/actual.out")"
 printf '%s\n' \
     "$tmp/rune/terminal-browser/data" "$tmp/rune/terminal-browser/state" \
     "$tmp/rune/terminal-browser/cache" "$tmp/rune/terminal-browser/config" \
-    "$tmp/rune/terminal-browser/runtime" "$tmp/rune/terminal-browser/tmp" \
+    "$runtime" "$tmp/rune/terminal-browser/tmp" \
     "$tmp/rune/terminal-browser/interop" "$tmp/rune/terminal-browser/appdata" \
     "$tmp/rune/terminal-browser/config/terminal-browser" \
     "$tmp/rune/lib/browser" "$tmp/rune/lib/browser/cli/dist/main.js" \
@@ -149,6 +151,20 @@ if [ -n "$(ls -A "$tmp/home")" ] || [ -e "$tmp/home/relative" ]; then
     echo 'error: launcher wrote outside RUNE_DATADIR' >&2; exit 1
 fi
 echo "ok: launcher data directory isolation"
+
+# terminal-browser binds its longest socket at
+# <XDG_RUNTIME_DIR>/terminal-browser-<hash>/agent-browser/terminal-browser-<pid>-<seq>.sock;
+# sun_path holds 103 bytes on macOS. The data directory used here is longer than
+# a typical ~/.rune, so a runtime directory under it would not fit.
+sock="$runtime/terminal-browser-00000000/agent-browser/terminal-browser-4194304-999.sock"
+if [ "${#sock}" -gt 103 ]; then
+    echo "error: socket path is ${#sock} bytes, over the 103-byte limit: $sock" >&2; exit 1
+fi
+if [ ! -d "$runtime" ] || [ -L "$runtime" ] || [ ! -O "$runtime" ] ||
+    [ "$(ls -ld "$runtime" | cut -c1-10)" != drwx------ ]; then
+    echo "error: runtime directory $runtime is not private" >&2; exit 1
+fi
+echo "ok: socket paths fit sun_path"
 
 if [ "$TARGET_OS" = darwin ] && command -v codesign >/dev/null; then
 	tar -xzf "$TAR" -C "$tmp" ./electron

@@ -16,12 +16,26 @@ ROOT="$RUNE_DATADIR/lib/browser"
 STATE="$RUNE_DATADIR/terminal-browser"
 umask 077
 mkdir -p "$STATE/data" "$STATE/state" "$STATE/cache" "$STATE/config" \
-	"$STATE/runtime" "$STATE/tmp" "$STATE/interop" "$STATE/appdata" || exit 1
+	"$STATE/tmp" "$STATE/interop" "$STATE/appdata" || exit 1
+
+# terminal-browser binds unix sockets about 70 bytes below XDG_RUNTIME_DIR,
+# and a socket path must fit sun_path (103 bytes on macOS), which a runtime
+# directory under RUNE_DATADIR does not leave room for. The sockets therefore
+# live in a short directory that only this user can enter; /tmp is sticky, so
+# nobody else can replace it once it exists.
+RUNTIME="/tmp/rune-tb-$(id -u)"
+mkdir -p "$RUNTIME" || exit 1
+if [ -L "$RUNTIME" ] || [ ! -O "$RUNTIME" ]; then
+	echo "terminal-browser: $RUNTIME is not a directory owned by $(id -un)" >&2
+	exit 1
+fi
+chmod 700 "$RUNTIME" || exit 1
+
 export XDG_DATA_HOME="$STATE/data"
 export XDG_STATE_HOME="$STATE/state"
 export XDG_CACHE_HOME="$STATE/cache"
 export XDG_CONFIG_HOME="$STATE/config"
-export XDG_RUNTIME_DIR="$STATE/runtime"
+export XDG_RUNTIME_DIR="$RUNTIME"
 export TMPDIR="$STATE/tmp"
 export TMP="$TMPDIR" TEMP="$TMPDIR"
 export TERMINAL_BROWSER_INTEROP_DIR="$STATE/interop"
