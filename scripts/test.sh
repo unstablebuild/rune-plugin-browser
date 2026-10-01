@@ -2,7 +2,8 @@
 # Verifies the built release tarball. Run after `make`.
 #
 # Guards:
-#   1. Expected payload: launcher, config.yaml, license, electron runtime.
+#   1. Expected payload: launcher, config.yaml, license, electron runtime,
+#      and none of upstream's agent skills.
 #   2. Only the executables that must be executed carry an exec bit (Rune
 #      copies every executable onto PATH), and the launcher is the last one,
 #      so it owns the terminal-browser name on PATH.
@@ -31,14 +32,16 @@ linux)
 esac
 
 for want in ./bin/terminal-browser ./config.yaml ./cli/dist/main.js \
-	./skills/default/terminal-browser/SKILL.md \
-	./skills/codex/terminal-browser/SKILL.md \
 	./licenses/terminal-browser/LICENSE "$electron"; do
 	grep -qxF "$want" <<<"$members" || {
 		echo "error: $TAR is missing '$want'" >&2
 		exit 1
 	}
 done
+if grep -q '^\./skills/' <<<"$members"; then
+	echo "error: $TAR still bundles upstream's agent skills" >&2
+	exit 1
+fi
 echo "ok: expected payload present"
 
 # Regular files with any exec bit, in archive order.
@@ -86,15 +89,13 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
     cli = archive.extractfile("./cli/dist/main.js").read().decode()
     browser = archive.extractfile("./browser/dist/main.js").read().decode()
     package_config = archive.extractfile("./config.yaml").read().decode()
-    skill = archive.extractfile("./skills/default/terminal-browser/SKILL.md").read().decode()
     upstream_license = archive.extractfile("./licenses/terminal-browser/LICENSE").read().decode()
     launcher_source = archive.extractfile("./bin/terminal-browser").read().decode()
 
-assert "skills-dir: '$RUNE_DATADIR/lib/$RUNE_PKG_ID/skills/default'" in package_config
+assert "skills" not in package_config
 assert 'browser: terminalnewtab terminal-browser $1' in package_config
 assert 'pkg install browser' in launcher_source
 assert 'ROOT="$RUNE_DATADIR/lib/browser"' in launcher_source
-assert 'name: terminal-browser' in skill
 assert 'Zenbu Labs, Inc.' in upstream_license
 assert 'ripgrep' not in upstream_license
 

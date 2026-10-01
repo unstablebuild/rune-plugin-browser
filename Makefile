@@ -54,9 +54,12 @@ $(UPSTREAM_TAR):
 # or dlopen'd rather than executed (scripts, shared libraries, framework
 # binaries, and Squirrel's unused ShipIt updater). This keeps the macOS app's
 # signature valid: codesign seals contents, not modes.
+# Upstream's agent skills are dropped: Rune Agent drives a browser with its
+# built-in web_browser tool instead.
 stage: $(UPSTREAM_TAR)
 	rm -rf pkg && mkdir -p pkg
 	tar -xzf $(UPSTREAM_TAR) -C pkg --strip-components 1
+	rm -rf pkg/skills
 	python3 scripts/patch-release.py pkg
 	find pkg -type f -perm -u+x \( -name '*.js' -o -name '*.sh' \
 		-o -name '*.dylib' -o -name '*.so' -o -name '*.so.*' -o -name ShipIt \) \

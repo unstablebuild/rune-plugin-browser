@@ -2,7 +2,8 @@
 
 A package that bundles [terminal-browser](https://github.com/zenbu-labs/terminal-browser),
 a real Chromium browser to run as native content within
-[Rune](https://github.com/unstablebuild/rune).
+[Rune](https://github.com/unstablebuild/rune), and enables Rune Agent's built-in
+`web_browser` tool.
 
 https://github.com/user-attachments/assets/94b98df7-4452-411c-9f97-6d4c081ab1cd
 
@@ -13,14 +14,14 @@ Installing this package:
 
 - Adds the `terminal-browser` command to your Rune data directory and puts it on your
   `PATH`. Open a browser in a new Rune tab from the command prompt with `browser [url]`.
-- Bundles `agent-browser` to power `terminal-browser action`, so an agent can drive a
-browser session.
-- Bundles upstream's `terminal-browser` skill and configures Rune Agent to discover it. If
-Rune Agent is already running, restart Rune for it to read the new skills directory.
+- Enables Rune Agent's built-in `web_browser` tool, so agents can navigate, read and
+  interact with web pages in a private headless browser. It does this by bundling
+  `agent-browser` and putting it on your `PATH`, which also powers
+  `terminal-browser action`.
 
-This package does not run upstream's setup or alter agent directories, editor settings, or
-system AppArmor profiles. `terminal-browser setup` is disabled. Upgrades go through Rune
-rather than `terminal-browser upgrade`.
+This package does not install upstream's agent skills, run upstream's setup, or alter agent
+directories, editor settings, or system AppArmor profiles. `terminal-browser setup` is
+disabled. Upgrades go through Rune rather than `terminal-browser upgrade`.
 
 ## Install
 
