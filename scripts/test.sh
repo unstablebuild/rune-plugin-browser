@@ -2,11 +2,12 @@
 # Verifies the built release tarball. Run after `make`.
 #
 # Guards:
-#   1. Expected payload: launcher, config.yaml, license, electron runtime,
-#      and none of upstream's agent skills.
-#   2. Only the executables that must be executed carry an exec bit (Rune
-#      copies every executable onto PATH), and the launcher is the last one,
-#      so it owns the terminal-browser name on PATH.
+#   1. Expected payload: launcher, agent-browser in the top-level bin/ (the
+#      only directory Rune publishes onto PATH), config.yaml, license,
+#      electron runtime, and none of upstream's agent skills.
+#   2. Only the executables that must be executed carry an exec bit (older
+#      Rune releases copy every executable onto PATH), and the launcher is
+#      the last one, so it owns the terminal-browser name on PATH there.
 #   3. Patched JS disables setup and keeps writable output under Rune data.
 #   4. The launcher uses only the supplied absolute Rune data directory, except
 #      for sockets, whose paths must fit the platform's limit.
@@ -23,17 +24,17 @@ members="$(tar -tzf "$TAR")"
 case "$TARGET_OS" in
 darwin)
 	electron=./electron/terminal-browser.app/Contents/MacOS/terminal-browser
-	want_exec="./agent-browser/bin/agent-browser ./bin/native-scroll-helper ./bin/terminal-browser"
+	want_exec="./bin/agent-browser ./bin/native-scroll-helper ./bin/terminal-browser"
 	;;
 linux)
 	electron=./electron/pixel
-	want_exec="./agent-browser/bin/agent-browser ./bin/terminal-browser ./electron/chrome-sandbox ./electron/chrome_crashpad_handler ./electron/pixel"
+	want_exec="./bin/agent-browser ./bin/terminal-browser ./electron/chrome-sandbox ./electron/chrome_crashpad_handler ./electron/pixel"
 	;;
 *) echo "error: unsupported TARGET_OS $TARGET_OS" >&2; exit 1 ;;
 esac
 
-for want in ./bin/terminal-browser ./config.yaml ./cli/dist/main.js \
-	./licenses/terminal-browser/LICENSE "$electron"; do
+for want in ./bin/terminal-browser ./bin/agent-browser ./config.yaml \
+	./cli/dist/main.js ./licenses/terminal-browser/LICENSE "$electron"; do
 	grep -qxF "$want" <<<"$members" || {
 		echo "error: $TAR is missing '$want'" >&2
 		exit 1
@@ -41,6 +42,10 @@ for want in ./bin/terminal-browser ./config.yaml ./cli/dist/main.js \
 done
 if grep -q '^\./skills/' <<<"$members"; then
 	echo "error: $TAR still bundles upstream's agent skills" >&2
+	exit 1
+fi
+if grep -q '^\./agent-browser/' <<<"$members"; then
+	echo "error: $TAR still ships agent-browser outside bin/" >&2
 	exit 1
 fi
 echo "ok: expected payload present"
@@ -109,6 +114,10 @@ for forbidden in (
     assert forbidden not in cli, f"unexpected CLI side effect: {forbidden}"
 assert 'if (command === "setup") fail("setup is disabled in the Rune package");' in cli
 assert 'var LOG_DIR = LOGS_DIR;' in cli
+# The launcher points `terminal-browser action` at the relocated agent-browser
+# through upstream's override, which the CLI checks before DIST_ROOT.
+assert 'const override = process.env.TERMINAL_BROWSER_AGENT;' in cli
+assert 'export TERMINAL_BROWSER_AGENT="${TERMINAL_BROWSER_AGENT:-$ROOT/bin/agent-browser}"' in launcher_source
 assert 'var OUTPUT_ROOT = import_node_path9.default.join(DATA_DIR, "recordings");' in browser
 assert 'var OUTPUT_ROOT = "/tmp/recordings";' not in browser
 PY
@@ -127,7 +136,7 @@ printf '%s\n' "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME" \
     "$XDG_CONFIG_HOME" "$XDG_RUNTIME_DIR" "$TMPDIR" \
     "$TERMINAL_BROWSER_INTEROP_DIR" "$TERMINAL_BROWSER_APPDATA" \
     "$TERMINAL_BROWSER_CONFIG_DIR" "$TERMINAL_BROWSER_DIST_ROOT" \
-    "$1" "$2"
+    "$TERMINAL_BROWSER_AGENT" "$1" "$2"
 SH
 chmod +x "$tmp/rune/lib/browser/electron/pixel"
 if (cd "$tmp/home" && env -u RUNE_DATADIR HOME="$tmp/home" "$launcher" --help) >"$tmp/unset.out" 2>&1; then
@@ -144,8 +153,8 @@ printf '%s\n' \
     "$runtime" "$tmp/rune/terminal-browser/tmp" \
     "$tmp/rune/terminal-browser/interop" "$tmp/rune/terminal-browser/appdata" \
     "$tmp/rune/terminal-browser/config/terminal-browser" \
-    "$tmp/rune/lib/browser" "$tmp/rune/lib/browser/cli/dist/main.js" \
-    '--help' >"$tmp/expected.out"
+    "$tmp/rune/lib/browser" "$tmp/rune/lib/browser/bin/agent-browser" \
+    "$tmp/rune/lib/browser/cli/dist/main.js" '--help' >"$tmp/expected.out"
 diff -u "$tmp/expected.out" "$tmp/actual.out"
 if [ -n "$(ls -A "$tmp/home")" ] || [ -e "$tmp/home/relative" ]; then
     echo 'error: launcher wrote outside RUNE_DATADIR' >&2; exit 1

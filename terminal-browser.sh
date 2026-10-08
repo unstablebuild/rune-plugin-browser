@@ -53,6 +53,9 @@ if [ "$1" = setup ]; then
 fi
 
 export TERMINAL_BROWSER_DIST_ROOT="$ROOT"
+# Upstream ships agent-browser under agent-browser/bin/, but the package moves
+# it to bin/ so Rune puts it on PATH.
+export TERMINAL_BROWSER_AGENT="${TERMINAL_BROWSER_AGENT:-$ROOT/bin/agent-browser}"
 export ELECTRON_RUN_AS_NODE=1
 if [ -d "$ROOT/electron/terminal-browser.app" ]; then
 	export NATIVE_SCROLL_HELPER="${NATIVE_SCROLL_HELPER:-$ROOT/bin/native-scroll-helper}"

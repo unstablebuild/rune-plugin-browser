@@ -49,17 +49,23 @@ $(UPSTREAM_TAR):
 	echo "$(TB_SHA256_$(UPSTREAM_TARGET))  $@.tmp" | shasum -a 256 -c -
 	mv $@.tmp $@
 
-# Stage upstream's release under pkg/. Rune copies every executable file in a
-# package onto PATH, so the exec bit is cleared on files that are interpreted
-# or dlopen'd rather than executed (scripts, shared libraries, framework
-# binaries, and Squirrel's unused ShipIt updater). This keeps the macOS app's
-# signature valid: codesign seals contents, not modes.
+# Stage upstream's release under pkg/. Rune copies only the executables
+# directly in a package's top-level bin/ onto PATH, so agent-browser moves
+# there for Rune Agent's web_browser tool to find it; the launcher points
+# `terminal-browser action` at the new location.
+# Older Rune releases copy every executable file in a package onto PATH, so
+# the exec bit is cleared on files that are interpreted or dlopen'd rather
+# than executed (scripts, shared libraries, framework binaries, and Squirrel's
+# unused ShipIt updater). This keeps the macOS app's signature valid: codesign
+# seals contents, not modes.
 # Upstream's agent skills are dropped: Rune Agent drives a browser with its
 # built-in web_browser tool instead.
 stage: $(UPSTREAM_TAR)
 	rm -rf pkg && mkdir -p pkg
 	tar -xzf $(UPSTREAM_TAR) -C pkg --strip-components 1
 	rm -rf pkg/skills
+	mv pkg/agent-browser/bin/agent-browser pkg/bin/agent-browser
+	rm -r pkg/agent-browser
 	python3 scripts/patch-release.py pkg
 	find pkg -type f -perm -u+x \( -name '*.js' -o -name '*.sh' \
 		-o -name '*.dylib' -o -name '*.so' -o -name '*.so.*' -o -name ShipIt \) \
@@ -74,8 +80,9 @@ stage: $(UPSTREAM_TAR)
 		https://raw.githubusercontent.com/zenbu-labs/terminal-browser/$(TB_VERSION)/LICENSE
 
 # The launcher is appended last: on macOS the Electron executable is also
-# named terminal-browser, and Rune publishes executables in archive order, so
-# the last one wins the $RUNE_DATADIR/bin/terminal-browser slot.
+# named terminal-browser, and older Rune releases publish every executable in
+# archive order, so the last one wins the $RUNE_DATADIR/bin/terminal-browser
+# slot.
 $(TAR): stage
 	rm -f pkg.tar
 	cd pkg && $(GTAR) --no-xattrs --no-acls --exclude=./bin/terminal-browser -cf ../pkg.tar .
