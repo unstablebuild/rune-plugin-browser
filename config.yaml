@@ -1,3 +1,4 @@
 command:
   aliases:
     browser: terminalnewtab terminal-browser $1
+meta_open_url: browser $URL

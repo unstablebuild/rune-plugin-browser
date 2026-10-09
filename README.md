@@ -14,6 +14,8 @@ Installing this package:
 
 - Adds the `terminal-browser` command to your Rune data directory and puts it on your
   `PATH`. Open a browser in a new Rune tab from the command prompt with `browser [url]`.
+- Opens the `http://` and `https://` links you click in Rune in a new browser tab, by
+  setting [`meta_open_url`](https://docs.rune.build/config#links) to `browser $URL`.
 - Enables Rune Agent's built-in `web_browser` tool, so agents can navigate, read and
   interact with web pages in a private headless browser. It does this by bundling
   `agent-browser` and putting it on your `PATH`, which also powers
