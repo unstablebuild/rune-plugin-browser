@@ -93,14 +93,21 @@ $(TAR): stage
 test: $(TAR)
 	TAR=$(TAR) TARGET_OS=$(TARGET_OS) ./scripts/test.sh
 
+# Under Rune, each release reports to its terminal tab: working while it
+# builds, tests and uploads, blocked while bluectl waits for the PGP
+# passphrase (see dist.sh), then done or error, each with a notification.
+# Older runectl builds lack `status wrap`, so those run the release unwrapped.
+# dist.sh has no shebang, so it runs through sh rather than directly.
+STATUS_WRAP = $(if $(shell runectl status wrap --help >/dev/null 2>&1 && echo y),runectl status wrap --app make --msg "$@" --)
+
 $(DIST_TARGETS): dist-%:
 	@env=$$(echo $* | cut -d- -f1); \
 	 os=$$(echo $*  | cut -d- -f2); \
 	 arch=$$(echo $* | cut -d- -f3); \
 	 $(MAKE) clean; \
-	 $(MAKE) test TARGET_OS=$$os TARGET_ARCH=$$arch && \
-	 BLUECTL_CONFIG_DIR=$(BLUECTL_CONFIG_ROOT)/$$env/$$os-$$arch \
-	 BLUE_TARGET_OS=$$os BLUE_TARGET_ARCH=$$arch ./dist.sh
+	 $(STATUS_WRAP) env BLUECTL_CONFIG_DIR=$(BLUECTL_CONFIG_ROOT)/$$env/$$os-$$arch \
+	 BLUE_TARGET_OS=$$os BLUE_TARGET_ARCH=$$arch \
+	 sh -c '$(MAKE) test TARGET_OS=$$BLUE_TARGET_OS TARGET_ARCH=$$BLUE_TARGET_ARCH && ./dist.sh'
 
 clean:
 	rm -rf $(TAR) pkg.tar pkg/

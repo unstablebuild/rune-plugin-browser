@@ -30,6 +30,12 @@ blue_release_dist() {
 	printf "\n$GIT_LOG\n";
 
 	echo "uploading $BLUE_RELEASE_TAG"
+	# bluectl prompts for the PGP passphrase next. Under Rune, mark the tab as
+	# waiting on the user so the prompt reaches them as a notification.
+	if command -v runectl >/dev/null; then
+		runectl status blocked --kind auth --app bluectl \
+			"Enter the PGP passphrase to upload browser $BLUE_RELEASE_TAG for $OS/$ARCH"
+	fi
 	"${BLUE_EXEC[@]}" release upload \
 		-d target-os=$OS \
 		-d target-arch=$ARCH \
