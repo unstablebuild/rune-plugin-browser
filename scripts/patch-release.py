@@ -57,6 +57,33 @@ patch(
     [
         ('var OUTPUT_ROOT = "/tmp/recordings";',
          'var OUTPUT_ROOT = import_node_path9.default.join(DATA_DIR, "recordings");'),
+        # Fill the Rune pane: the page spans the full width and height below
+        # the toolbar, with no padding or border line around it. The agent
+        # glow still marks agent-controlled tabs.
+        (
+            '  const pad = Math.round(info.basePx * 0.45);\n'
+            '  const padLeft = Math.round(info.basePx * 0.2);\n'
+            '  const padBottom = Math.round(info.basePx * 0.2);\n',
+            '  const pad = 0;\n'
+            '  const padLeft = 0;\n'
+            '  const padBottom = 0;\n',
+        ),
+        (
+            '    !coveredByReview && /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(\n'
+            '      import_pixel11.Box,\n'
+            '      {\n'
+            '        style: {\n'
+            '          position: "absolute",\n'
+            '          inset: { top: layout.page.y - 1, left: layout.page.x - 1 },\n'
+            '          width: layout.page.width + 2,\n'
+            '          height: layout.page.height + 2,\n'
+            '          cornerRadius: seamRadius(layout.rem * 0.55, dock, "page"),\n'
+            '          border: { width: 1, color: agentActive ? theme.accent : theme.frame }\n'
+            '        }\n'
+            '      }\n'
+            '    ),\n',
+            '',
+        ),
         # Square the viewport border, WebView clip, agent glow, and docked
         # DevTools together. Leave buttons, menus, and website styling alone.
         (
