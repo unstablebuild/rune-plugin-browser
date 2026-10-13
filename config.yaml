@@ -1,4 +1,9 @@
 command:
   aliases:
-    browser: terminalnewtab terminal-browser $1
+    browser:
+      # idempotently persist ephemeral content
+      - windowconverttab
+      # close error notification if it's already a tab
+      - notificationcloseall
+      - terminalnewtab terminal-browser $1
 meta_open_url: browser $URL

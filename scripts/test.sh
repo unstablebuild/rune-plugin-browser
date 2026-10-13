@@ -101,7 +101,8 @@ with tarfile.open(sys.argv[1], "r:gz") as archive:
 
 assert "skills" not in package_config
 assert 'browser: terminalnewtab terminal-browser $1' in package_config
-assert 'meta_open_url: browser $URL' in package_config
+assert '    browsersplit:\n      - windownew\n      - terminalnewtab terminal-browser $1\n' in package_config
+assert 'meta_open_url: browsersplit $URL' in package_config
 assert 'pkg install browser' in launcher_source
 assert 'ROOT="$RUNE_DATADIR/lib/browser"' in launcher_source
 assert 'Zenbu Labs, Inc.' in upstream_license
