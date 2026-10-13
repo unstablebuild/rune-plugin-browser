@@ -25,6 +25,9 @@ This package does not install upstream's agent skills, run upstream's setup, or 
 directories, editor settings, or system AppArmor profiles. `terminal-browser setup` is
 disabled. Upgrades go through Rune rather than `terminal-browser upgrade`.
 
+The browser viewport and docked DevTools use square corners to fit Rune's panes.
+This does not change website styling or the browser's buttons and menus.
+
 ## Install
 
 Open the [Rune console](https://docs.rune.build/learn/console) and run:

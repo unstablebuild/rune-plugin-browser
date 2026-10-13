@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove upstream setup and redirect writable paths in the pinned release.
+"""Adapt the pinned release's setup, writable paths, and viewport for Rune.
 
 Replacements fail closed if the upstream JS bundle changes: bump the pin and
 review upstream side effects before updating these anchors.
@@ -57,5 +57,19 @@ patch(
     [
         ('var OUTPUT_ROOT = "/tmp/recordings";',
          'var OUTPUT_ROOT = import_node_path9.default.join(DATA_DIR, "recordings");'),
+        # Square the viewport border, WebView clip, agent glow, and docked
+        # DevTools together. Leave buttons, menus, and website styling alone.
+        (
+            'function seamRadius(radius, dock, side) {\n'
+            '  if (!dock) return radius;\n'
+            '  if (side === "page") {\n'
+            '    return dock === "bottom" ? { topLeft: radius, topRight: radius, bottomLeft: 0, bottomRight: 0 } : { topLeft: radius, bottomLeft: radius, topRight: 0, bottomRight: 0 };\n'
+            '  }\n'
+            '  return dock === "bottom" ? { bottomLeft: radius, bottomRight: radius, topLeft: 0, topRight: 0 } : { topRight: radius, bottomRight: radius, topLeft: 0, bottomLeft: 0 };\n'
+            '}',
+            'function seamRadius(radius, dock, side) {\n'
+            '  return 0;\n'
+            '}',
+        ),
     ],
 )

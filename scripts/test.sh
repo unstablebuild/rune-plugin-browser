@@ -8,7 +8,8 @@
 #   2. Only the executables that must be executed carry an exec bit (older
 #      Rune releases copy every executable onto PATH), and the launcher is
 #      the last one, so it owns the terminal-browser name on PATH there.
-#   3. Patched JS disables setup and keeps writable output under Rune data.
+#   3. Patched JS disables setup, keeps writable output under Rune data, and
+#      gives the browser viewport square corners.
 #   4. The launcher uses only the supplied absolute Rune data directory, except
 #      for sockets, whose paths must fit the platform's limit.
 #   5. On darwin hosts, the macOS app's signature still verifies.
@@ -121,6 +122,17 @@ assert 'const override = process.env.TERMINAL_BROWSER_AGENT;' in cli
 assert 'export TERMINAL_BROWSER_AGENT="${TERMINAL_BROWSER_AGENT:-$ROOT/bin/agent-browser}"' in launcher_source
 assert 'var OUTPUT_ROOT = import_node_path9.default.join(DATA_DIR, "recordings");' in browser
 assert 'var OUTPUT_ROOT = "/tmp/recordings";' not in browser
+
+# Border, WebView clipping, agent glow, and both DevTools layers must use the
+# same square radius, including when DevTools is docked at the bottom/right.
+assert browser.count('function seamRadius(radius, dock, side) {\n  return 0;\n}') == 1
+for call, count in (
+    ('seamRadius(layout.rem * 0.55, dock, "page")', 1),
+    ('seamRadius(Math.max(2, layout.rem * 0.55 - 1), dock, "page")', 2),
+    ('seamRadius(layout.rem * 0.55, rect.dock, "devtools")', 1),
+    ('seamRadius(Math.max(2, layout.rem * 0.55 - 1), rect.dock, "devtools")', 1),
+):
+    assert browser.count(call) == count, f"viewport radius call changed: {call}"
 PY
 echo "ok: patched JS invariants"
 
