@@ -33,11 +33,11 @@ DIST_TARGETS := \
 	dist-staging-darwin-arm64 dist-staging-darwin-amd64 \
 	dist-staging-linux-arm64  dist-staging-linux-amd64
 
-.PHONY: $(DIST_TARGETS) dist-all-prod dist-all-staging clean test stage
+.PHONY: $(DIST_TARGETS) dist-prod-all dist-staging-all clean test stage
 default: $(TAR)
 
 # Targets share browser.tar.gz and pkg/, so they must run one at a time.
-dist-all-prod dist-all-staging: dist-all-%:
+dist-prod-all dist-staging-all: dist-%-all:
 	$(MAKE) dist-$*-darwin-arm64
 	$(MAKE) dist-$*-darwin-amd64
 	$(MAKE) dist-$*-linux-arm64
@@ -100,12 +100,23 @@ test: $(TAR)
 # dist.sh has no shebang, so it runs through sh rather than directly.
 STATUS_WRAP = $(if $(shell runectl status wrap --help >/dev/null 2>&1 && echo y),runectl status wrap --app make --msg "$@" --)
 
+# The version dist.sh uploads as. Published versions are immutable, so a
+# target whose version is already in its bucket is skipped before building;
+# that lets dist-*-all resume after a partial run.
+RELEASE_TAG = $(shell git describe --tags --dirty)
+
 $(DIST_TARGETS): dist-%:
 	@env=$$(echo $* | cut -d- -f1); \
 	 os=$$(echo $*  | cut -d- -f2); \
 	 arch=$$(echo $* | cut -d- -f3); \
+	 cfg=$(BLUECTL_CONFIG_ROOT)/$$env/$$os-$$arch; \
+	 published=$$(bluectl -c $$cfg release list -F '{{.Version}}' browser) || exit 1; \
+	 if printf '%s\n' "$$published" | grep -qxF '$(RELEASE_TAG)'; then \
+		echo "browser@$(RELEASE_TAG) is already published for $$env $$os/$$arch; skipping"; \
+		exit 0; \
+	 fi; \
 	 $(MAKE) clean; \
-	 $(STATUS_WRAP) env BLUECTL_CONFIG_DIR=$(BLUECTL_CONFIG_ROOT)/$$env/$$os-$$arch \
+	 $(STATUS_WRAP) env BLUECTL_CONFIG_DIR=$$cfg \
 	 BLUE_TARGET_OS=$$os BLUE_TARGET_ARCH=$$arch \
 	 sh -c '$(MAKE) test TARGET_OS=$$BLUE_TARGET_OS TARGET_ARCH=$$BLUE_TARGET_ARCH && ./dist.sh'
 
